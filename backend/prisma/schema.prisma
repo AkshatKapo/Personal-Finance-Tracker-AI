@@ -1,0 +1,86 @@
+// schema.prisma This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+
+  url = env("DATABASE_URL")
+}
+
+model User {
+  id                 String           @id @default(uuid())
+  email              String           @unique
+  name               String?
+  monthlyIncomeCents Int?
+  accounts           Account[]
+  notifications      Notification[] // NEW
+  categoryBudgets    CategoryBudget[] // <-- ADD THIS
+  bills              Bill[]
+}
+
+model Account {
+  id        String        @id @default(cuid())
+  userId    String
+  name      String
+  type      String
+  createdAt DateTime      @default(now())
+  user      User          @relation(fields: [userId], references: [id])
+  txns      Transaction[]
+}
+
+model Transaction {
+  id          String   @id @default(cuid())
+  accountId   String
+  postedAt    DateTime
+  description String
+  amountCents Int
+
+  // NEW:
+  category   String? // manual category (e.g., "Groceries")
+  aiCategory String? // later: AI-suggested category
+  aiReason   String? // later: why AI chose it
+
+  createdAt DateTime @default(now())
+  account   Account  @relation(fields: [accountId], references: [id])
+
+  @@index([accountId, postedAt])
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  message   String
+  createdAt DateTime @default(now())
+  read      Boolean  @default(false)
+}
+
+model Bill {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  name      String
+  amount    Float
+  dueDate   DateTime
+  frequency String
+  createdAt DateTime @default(now())
+}
+
+model CategoryBudget {
+  id        String   @id @default(cuid())
+  userId    String
+  category  String
+  capCents  Int
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@unique([userId, category]) // one budget per category per user (simple, recurring monthly)
+}

@@ -1,0 +1,20 @@
+# Node
+node_modules
+npm-debug.log
+
+# Env files
+.env
+.env.*
+
+# Build output
+dist
+build
+
+# Prisma
+generated
+prisma/generated
+
+# OS / IDE
+.DS_Store
+.vscode
+.idea
